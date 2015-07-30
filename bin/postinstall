@@ -9,8 +9,10 @@ VHOST_INCLUDES_DIR="/etc/${APP_NAME}/addons/apache2/includes/vhost"
 SERVER_INCLUDES_DIR="/etc/${APP_NAME}/addons/apache2/includes/server"
 OSFAMILY="$(wiz_fact osfamily)"
 
+##
+# Create and set proper permissions to the given SVN repositories root
 create_svn_repositories() {
-	local svn_repositories="$(wiz_get "svn-dav/repositories")"
+	local svn_repositories="$(wiz_get "repositories/svn-path")"
 	if [ ! -d "$svn_repositories" ] ; then
 		mkdir -p "$svn_repositories"
 		chown ${APP_USER}.${APP_GROUP} "$svn_repositories"
@@ -24,8 +26,25 @@ create_svn_repositories() {
 	fi
 }
 
+##
+# Create and set proper permissions to the given GIT repositories root
+create_git_repositories() {
+	local git_repositories="$(wiz_get "repositories/git-path")"
+	if [ ! -d "$git_repositories" ] ; then
+		mkdir -p "$git_repositories"
+		chown ${APP_USER}.${APP_GROUP} "$git_repositories"
+	fi
+
+	${CLI} config:set GIT_REPOSITORIES="$git_repositories"
+
+	if [ "$OSFAMILY" = "redhat" ] ; then
+		chcon -R -h -t httpd_sys_content_t "$git_repositories" || true
+		chcon -R -h -t httpd_sys_rw_content_t "$git_repositories" || true
+	fi
+}
+
 configure_api_key() {
-	local sys_api_key="$(wiz_get "svn-dav/api-key")"
+	local sys_api_key="$(wiz_get "repositories/api-key")"
 	${CLI} config:set SYS_API_KEY="${sys_api_key}"
 }
 
@@ -40,6 +59,8 @@ reload_apache2() {
 	esac
 }
 
+##
+# Enable an included vhost configuration
 enable_apache2_vhost_include() {
 	local output="$1"
 	chmod 0640 "$output"
@@ -50,17 +71,61 @@ enable_apache2_vhost_include() {
 	fi
 }
 
+##
+# Replace the configuration templates in 'svn_dav.conf'
+# and output the configured file as an Apache vhost configuration.
+setup_svn_configuration() {
+	local apikey="$1"
+	local src="conf/vhost/svn_dav.conf"
+	local dst="$VHOST_INCLUDES_DIR/svn_dav.conf"
+	local svn_repositories="$(wiz_get "repositories/svn-path")"
+
+	tmpfile=$(mktemp)
+	cp -f "$src" "$tmpfile"
+	sed -i "s|_SVN_REPOSITORIES_|${svn_repositories}|g" ${tmpfile}
+	sed -i "s|_APP_URI_|http://127.0.0.1:${port}|g" ${tmpfile}
+	sed -i "s|_APP_API_KEY_|${sys_api_key}|g" ${tmpfile}
+	mv -f "$tmpfile" "$dst"
+
+	enable_apache2_vhost_include "$dst"
+}
+
+
+##
+# Replace the configuration templates in 'git_smart_http.conf'
+# and output the configured file as an Apache vhost configuration.
+setup_git_configuration() {
+	local apikey="$1"
+	local src="conf/vhost/git_smart_http.conf"
+	local dst="$VHOST_INCLUDES_DIR/git_smart_http.conf"
+	local git_repositories="$(wiz_get "repositories/git-path")"
+	local git_http_backend="$(wiz_get "repositories/git-http-backend")"
+
+	tmpfile=$(mktemp)
+	cp -f "$src" "$tmpfile"
+	sed -i "s|_GIT_REPOSITORIES_|${git_repositories}|g" ${tmpfile}
+	sed -i "s|_GIT_HTTP_BACKEND_|${git_http_backend}|g" ${tmpfile}
+	sed -i "s|_APP_URI_|http://127.0.0.1:${port}|g" ${tmpfile}
+	sed -i "s|_APP_API_KEY_|${sys_api_key}|g" ${tmpfile}
+	mv -f "$tmpfile" "$dst"
+
+	enable_apache2_vhost_include "$dst"
+}
+
+##
+# Configure the correct perl include path for loading
+# the OpenProjectAuthentication perl module.
+# Configure and write SVN and Git configuration files as Apache vhosts.
 configure_apache2_server() {
 	local port=$(${CLI} config:get PORT || echo "6000")
-	local svn_repositories="$(wiz_get "svn-dav/repositories")"
-	local sys_api_key="$(wiz_get "svn-dav/api-key")"
-	local svn_dav_perl_conf="$SERVER_INCLUDES_DIR/svn_dav_perl.conf"
+	local sys_api_key="$(wiz_get "repositories/api-key")"
+	local repositories_perl_conf="$SERVER_INCLUDES_DIR/repositories_perl.conf"
 
 	case "$OSFAMILY" in
 		"debian")
 			mkdir -p /usr/lib/perl5/Apache/
 			cp -f "${APP_HOME}/extra/svn/OpenProjectAuthentication.pm" /usr/lib/perl5/Apache/
-			cat - <<SERVER_CONF > "$svn_dav_perl_conf"
+			cat - <<SERVER_CONF > "$repositories_perl_conf"
 PerlSwitches -I/usr/lib/perl5
 PerlLoadModule Apache::OpenProjectAuthentication
 SERVER_CONF
@@ -69,7 +134,7 @@ SERVER_CONF
 			local perl_dir="/usr/lib64/perl5/Apache/"
 			mkdir -p $perl_dir
 			cp -f "${APP_HOME}/extra/svn/OpenProjectAuthentication.pm" "$perl_dir"
-			cat - <<SERVER_CONF > "$svn_dav_perl_conf"
+			cat - <<SERVER_CONF > "$repositories_perl_conf"
 PerlSwitches -I/usr/lib64/perl5/vendor_perl
 PerlLoadModule Apache::OpenProjectAuthentication
 SERVER_CONF
@@ -79,20 +144,12 @@ SERVER_CONF
 			local perl_dir="/usr/lib/perl5/vendor_perl/${perl_version}/Apache"
 			mkdir -p "$perl_dir"
 			cp -f "${APP_HOME}/extra/svn/OpenProjectAuthentication.pm" "$perl_dir"
-			echo "PerlLoadModule Apache::OpenProjectAuthentication" > "$svn_dav_perl_conf"
+			echo "PerlLoadModule Apache::OpenProjectAuthentication" > "$repositories_perl_conf"
 			;;
 	esac
 
-	local src="conf/vhost/svn_dav.conf"
-	local dst="$VHOST_INCLUDES_DIR/svn_dav.conf"
-	tmpfile=$(mktemp)
-	cp -f "$src" "$tmpfile"
-	sed -i "s|_SVN_REPOSITORIES_|${svn_repositories}|g" ${tmpfile}
-	sed -i "s|_APP_URI_|http://127.0.0.1:${port}|g" ${tmpfile}
-	sed -i "s|_APP_API_KEY_|${sys_api_key}|g" ${tmpfile}
-	mv -f "$tmpfile" "$dst"
-
-	enable_apache2_vhost_include "$dst"
+	local repositories_perl_conf="$(setup_svn_configuration "$sys_api_key")"
+	local git_smart_http_conf="$(setup_git_configuration "$sys_api_key")"
 
 	reload_apache2
 }
@@ -104,6 +161,7 @@ case "$(wiz_get "server/autoinstall")" in
 	"install")
 		configure_api_key
 		create_svn_repositories
+		create_git_repositories
 		case "$(wiz_get "server/variant")" in
 			"apache2")
 				configure_apache2_server

@@ -15,12 +15,14 @@ input_start() {
 
 input_params() {
 	local random_key=$(< /dev/urandom tr -dc A-Za-z0-9 | head -c32;echo;)
-	if ! wiz_get "svn-dav/api-key" &>/dev/null ; then
-		wiz_set "svn-dav/api-key" "${random_key}"
+	if ! wiz_get "repositories/api-key" &>/dev/null ; then
+		wiz_set "repositories/api-key" "${random_key}"
 	fi
 
-	wiz_put "svn-dav/api-key"
-	wiz_put "svn-dav/repositories"
+	wiz_put "repositories/api-key"
+	wiz_put "repositories/svn-path"
+	wiz_put "repositories/git-path"
+	wiz_put "repositories/git-http-backend"
 
 	if wiz_ask ; then
 		STATE="done"

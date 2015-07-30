@@ -29,6 +29,7 @@ install_required_dependencies_for_apache2() {
 			a2enmod perl
 			a2enmod dav
 			a2enmod dav_svn
+			a2enmod cgi
 			;;
 	esac
 }

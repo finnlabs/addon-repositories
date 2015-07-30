@@ -1,9 +1,19 @@
-Template: svn-dav/repositories
+Template: repositories/svn-path
 Type: string
 Default: /var/db/_APP_NAME_/svn
 Description: Enter the path to the directory that hosts the SVN repositories:
 
-Template: svn-dav/api-key
+Template: repositories/git-path
+Type: string
+Default: /var/db/_APP_NAME_/git
+Description: Enter the path to the directory that hosts the SVN repositories:
+
+Template: repositories/git-http-backend
+Type: string
+Default: /usr/lib/git-core/git-http-backend/
+Description: Enter the path to the git http backend CGI directory
+
+Template: repositories/api-key
 Type: string
 Description: Enter the API key used to communicate with _APP_NAME_:
  For the SVN integration to work, an API key is required.
