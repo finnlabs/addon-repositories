@@ -117,6 +117,9 @@ setup_git_configuration() {
 # the OpenProjectAuthentication perl module.
 # Configure and write SVN and Git configuration files as Apache vhosts.
 configure_apache2_server() {
+	local SVN_INSTALL="$1"
+	local GIT_INSTALL="$2"
+
 	local port=$(${CLI} config:get PORT || echo "6000")
 	local sys_api_key="$(wiz_get "repositories/api-key")"
 	local repositories_perl_conf="$SERVER_INCLUDES_DIR/repositories_perl.conf"
@@ -148,10 +151,32 @@ SERVER_CONF
 			;;
 	esac
 
-	local repositories_perl_conf="$(setup_svn_configuration "$sys_api_key")"
-	local git_smart_http_conf="$(setup_git_configuration "$sys_api_key")"
+
+	# Install SVN and Git when requested
+	if [ "$SVN_INSTALL" = "install" ] ; then
+		echo "Setting up SVN integration for Apache"
+		setup_svn_configuration "$sys_api_key"
+		create_svn_repositories
+	fi
+
+	if [ "$GIT_INSTALL" = "install" ] ; then
+		echo "Setting up Git integration for Apache"
+		setup_git_configuration "$sys_api_key"
+		create_git_repositories
+	fi
 
 	reload_apache2
+}
+
+install_apache_configuration() {
+	SVN_INSTALL=$(wiz_get "repositories/svn-install")
+	GIT_INSTALL=$(wiz_get "repositories/git-install")
+
+	if [ "$SVN_INSTALL" = "install" ] || [ "$GIT_INSTALL" = "install"] ; then
+		configure_apache2_server "$SVN_INSTALL" "$GIT_INSTALL"
+	else
+		echo "No repositories have been configured. Skipping configuration."
+	fi
 }
 
 case "$(wiz_get "server/autoinstall")" in
@@ -160,11 +185,9 @@ case "$(wiz_get "server/autoinstall")" in
 		;;
 	"install")
 		configure_api_key
-		create_svn_repositories
-		create_git_repositories
 		case "$(wiz_get "server/variant")" in
 			"apache2")
-				configure_apache2_server
+				install_apache_configuration
 				;;
 			*)
 				echo "Unsupported server variant."

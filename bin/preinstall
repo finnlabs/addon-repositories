@@ -10,19 +10,21 @@ install_required_dependencies_for_apache2() {
 	local dependencies=""
 	case "$OSFAMILY" in
 		"debian")
-			dependencies="subversion libapache2-mod-perl2 libapache2-svn"
+			dependencies="subversion git libapache2-mod-perl2 libapache2-svn"
 			for dependency in $dependencies ; do
 				wiz_check_package "$dependency" || apt-get install -y "$dependency"
 			done
 			;;
 		"redhat")
-			dependencies="mod_dav_svn subversion mod_perl perl-Digest-SHA perl-libwww-perl"
+			dependencies="mod_dav_svn subversion git mod_perl perl-Digest-SHA perl-libwww-perl"
 			for dependency in $dependencies ; do
 				wiz_check_package "$dependency" || yum install -y "$dependency"
 			done
+
+			wiz_set "repositories/git-http-backend" "/usr/libexec/git-core/git-http-backend"
 			;;
 		"suse")
-			dependencies="subversion subversion-server apache2-mod_perl perl-Digest-SHA1 perl-libwww-perl"
+			dependencies="subversion git subversion-server apache2-mod_perl perl-Digest-SHA1 perl-libwww-perl"
 			for dependency in $dependencies ; do
 				wiz_check_package "$dependency" || zypper install -y "$dependency"
 			done
