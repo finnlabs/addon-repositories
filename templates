@@ -30,10 +30,16 @@ Description: Enter the path to the directory that hosts the SVN repositories:
 
 Template: repositories/git-http-backend
 Type: string
-Default: /usr/lib/git-core/git-http-backend
-Description: Enter the path to the git http backend CGI directory
+Default: /usr/lib/git-core/git-http-backend/
+Description: Enter the path to the git http backend CGI directory.
+ Please note that the trailing slash is mandatory.
 
 Template: repositories/api-key
 Type: string
 Description: Enter the API key used to communicate with _APP_NAME_:
- For the SVN integration to work, an API key is required.
+ For the repository integration to work, an API key is required.
+
+Template: repositories/apache-wrapper-token
+Type: string
+Description: Enter the access key used to communicate repository changes with the Apache webserver:
+ For the repository integration of Subversion to work, this access key is required.

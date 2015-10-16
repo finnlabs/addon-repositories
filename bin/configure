@@ -14,6 +14,7 @@ input_start() {
 }
 
 input_params() {
+	# API key for OpenProject
 	local random_key=$(< /dev/urandom tr -dc A-Za-z0-9 | head -c32;echo;)
 	if ! wiz_get "repositories/api-key" &>/dev/null ; then
 		wiz_set "repositories/api-key" "${random_key}"
@@ -46,7 +47,15 @@ select_svn_installation() {
 }
 
 input_svn_params() {
+	# Access token for Apache wrapper
+	local random_key=$(< /dev/urandom tr -dc A-Za-z0-9 | head -c32;echo;)
+	if ! wiz_get "repositories/apache-wrapper-token" &>/dev/null ; then
+		wiz_set "repositories/apache-wrapper-token" "${random_key}"
+	fi
+
 	wiz_put "repositories/svn-path"
+	wiz_put "repositories/apache-wrapper-token"
+
 	if wiz_ask ; then
 		STATE="git_setup"
 	else
