@@ -132,6 +132,10 @@ setup_git_configuration() {
 	local git_repositories="$(wiz_get "repositories/git-path")"
 	local git_http_backend="$(wiz_get "repositories/git-http-backend")"
 
+	# Force trailing slash if missing to treat as CGI script
+	trailing=${git_http_backend:length-1:1}
+	[[ $last_char != "/" ]] && git_http_backend="${git_http_backend}/"; :
+
 	tmpfile=$(mktemp)
 	cp -f "$src" "$tmpfile"
 	sed -i "s|_GIT_REPOSITORIES_|${git_repositories}|g" ${tmpfile}
