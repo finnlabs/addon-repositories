@@ -8,6 +8,7 @@ CLI="${APP_NAME}"
 VHOST_INCLUDES_DIR="/etc/${APP_NAME}/addons/apache2/includes/vhost"
 SERVER_INCLUDES_DIR="/etc/${APP_NAME}/addons/apache2/includes/server"
 OSFAMILY="$(wiz_fact osfamily)"
+SERVER_USER=$(${CLI} config:get SERVER_USER)
 
 ##
 # Create and set proper permissions to the given SVN repositories root
@@ -163,6 +164,19 @@ setup_git_configuration() {
 }
 
 ##
+# Let openproject be a member of the apache group
+# for easier group-based sharing of repository directories
+add_openproject_to_apache_group() {
+	if [ "$OSFAMILY" = "suse" ] ; then
+		# Use different usermod signature for suse
+		usermod -A "${SERVER_USER}" "${APP_USER}"
+	else
+		usermod -a -G "${SERVER_USER}" "${APP_USER}"
+	fi
+}
+
+
+##
 # Configure the correct perl include path for loading
 # the OpenProjectAuthentication perl module.
 # Configure and write SVN and Git configuration files as Apache vhosts.
@@ -228,6 +242,7 @@ SERVER_CONF
 install_apache_configuration() {
 	if vendor_selected "svn" || vendor_selected "git"; then
 		configure_apache2_server
+		add_openproject_to_apache_group
 	else
 		echo "No repositories have been configured. Skipping configuration."
 	fi
