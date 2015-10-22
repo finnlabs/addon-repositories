@@ -17,6 +17,11 @@ install_required_dependencies_for_apache2() {
 
 			# Add openproject user to server group
 			usermod -a -G "${SERVER_USER}" "${APP_USER}"
+
+			a2enmod perl
+			a2enmod dav
+			a2enmod dav_svn
+			a2enmod cgi
 			;;
 		"redhat")
 			dependencies="mod_dav_svn subversion git mod_perl perl-Digest-SHA perl-libwww-perl"
@@ -24,10 +29,10 @@ install_required_dependencies_for_apache2() {
 				wiz_check_package "$dependency" || yum install -y "$dependency"
 			done
 
-			wiz_set "repositories/git-http-backend" "/usr/libexec/git-core/git-http-backend"
+			wiz_set "repositories/git-http-backend" "/usr/libexec/git-core/git-http-backend/"
 
 			# Add openproject user to server group
-			usermod -G "${SERVER_USER}" "${APP_USER}"
+			usermod -a -G "${SERVER_USER}" "${APP_USER}"
 			;;
 		"suse")
 			dependencies="subversion git subversion-server apache2-mod_perl perl-Digest-SHA1 perl-libwww-perl"
@@ -38,12 +43,13 @@ install_required_dependencies_for_apache2() {
 			# Add openproject user to server group
 			usermod -A "${SERVER_USER}" "${APP_USER}"
 
+			a2enmod perl
+			a2enmod dav
+			a2enmod dav_svn
+			a2enmod cgi
+
 			;;
 	esac
-	a2enmod perl
-	a2enmod dav
-	a2enmod dav_svn
-	a2enmod cgi
 }
 
 case "$(wiz_get "server/autoinstall")" in

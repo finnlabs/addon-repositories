@@ -49,6 +49,9 @@ create_git_repositories() {
 	fi
 }
 
+##
+# Determine whether the given vendor (svn/git)
+# has been selected for installation in the wizard.
 vendor_selected() {
 	local VENDOR="$1"
 	VENDOR_CHOICE=$(wiz_get "repositories/$VENDOR-install")
