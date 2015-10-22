@@ -33,6 +33,8 @@ create_svn_repositories() {
 # Create and set proper permissions to the given GIT repositories root
 create_git_repositories() {
 	local git_repositories="$(wiz_get "repositories/git-path")"
+	local git_http_backend="$(wiz_get "repositories/git-http-backend")"
+
 	if [ ! -d "$git_repositories" ] ; then
 		mkdir -p "$git_repositories"
 	fi
@@ -46,6 +48,12 @@ create_git_repositories() {
 	if [ "$OSFAMILY" = "redhat" ] ; then
 		chcon -R -h -t httpd_sys_content_t "$git_repositories" || true
 		chcon -R -h -t httpd_sys_rw_content_t "$git_repositories" || true
+
+		# selinux requires the file, NOT the path, so remove the trailing
+		# slash we require elsewhere
+		git_http_backend_file=${git_http_backend%/}
+		chcon -t httpd_git_script_exec_t "$git_http_backend_file" || true
+		chcon -R -t httpd_git_rw_content_t "$git_repositories" || true
 	fi
 }
 
