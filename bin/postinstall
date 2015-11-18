@@ -201,6 +201,12 @@ configure_apache2_server() {
 	local sys_api_key="$(wiz_get "repositories/api-key")"
 	local repositories_perl_conf="$SERVER_INCLUDES_DIR/00_repositories_perl.conf"
 
+	# Delete old configuration, if it exists
+	local old_repositories_perl_conf="$SERVER_INCLUDES_DIR/repositories_perl.conf"
+	if [ -e ${old_repositories_perl_conf} ] ; then
+		rm -f ${old_repositories_perl_conf}
+	fi
+
 	case "$OSFAMILY" in
 		"debian")
 			mkdir -p /usr/lib/perl5/Apache/
