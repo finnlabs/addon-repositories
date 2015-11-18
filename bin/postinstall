@@ -139,6 +139,22 @@ setup_subversion_wrapper() {
 
 
 ##
+# Create a vhost for the repository wrapper to be accessed by localhost
+setup_subversion_vhost() {
+	local src="conf/server/repoman_svn_vhost.conf"
+	local dst="$SERVER_INCLUDES_DIR/repoman_svn_vhost.conf"
+	local repoman_location="$VHOST_INCLUDES_DIR/repoman_svn_wrapper.conf"
+
+	tmpfile=$(mktemp)
+	cp -f "$src" "$tmpfile"
+	sed -i "s|_REPOMAN_SVN_CONF_LOCATION_|${repoman_location}|g" ${tmpfile}
+	mv -f "$tmpfile" "$dst"
+
+	enable_apache2_vhost_include "$dst"
+}
+
+
+##
 # Replace the configuration templates in 'git_smart_http.conf'
 # and output the configured file as an Apache vhost configuration.
 setup_git_configuration() {
@@ -225,6 +241,7 @@ SERVER_CONF
 		# Install Apache wrapper
 		local apache_wrapper_token="$(wiz_get "repositories/apache-wrapper-token")"
 		setup_subversion_wrapper "$apache_wrapper_token"
+		setup_subversion_vhost
 
 		setup_svn_configuration "$sys_api_key"
 		create_svn_repositories
