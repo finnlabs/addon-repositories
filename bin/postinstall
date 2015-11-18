@@ -141,8 +141,8 @@ setup_subversion_wrapper() {
 ##
 # Create a vhost for the repository wrapper to be accessed by localhost
 setup_subversion_vhost() {
-	local src="conf/server/repoman_svn_vhost.conf"
-	local dst="$SERVER_INCLUDES_DIR/repoman_svn_vhost.conf"
+	local src="conf/server/20_repoman_svn_vhost.conf"
+	local dst="$SERVER_INCLUDES_DIR/20_repoman_svn_vhost.conf"
 	local repoman_location="$VHOST_INCLUDES_DIR/repoman_svn_wrapper.conf"
 
 	tmpfile=$(mktemp)
@@ -199,7 +199,13 @@ add_openproject_to_apache_group() {
 configure_apache2_server() {
 	local port=$(${CLI} config:get PORT || echo "6000")
 	local sys_api_key="$(wiz_get "repositories/api-key")"
-	local repositories_perl_conf="$SERVER_INCLUDES_DIR/repositories_perl.conf"
+	local repositories_perl_conf="$SERVER_INCLUDES_DIR/00_repositories_perl.conf"
+
+	# Delete old configuration, if it exists
+	local old_repositories_perl_conf="$SERVER_INCLUDES_DIR/repositories_perl.conf"
+	if [ -e ${old_repositories_perl_conf} ] ; then
+		rm -f ${old_repositories_perl_conf}
+	fi
 
 	case "$OSFAMILY" in
 		"debian")
