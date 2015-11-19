@@ -21,10 +21,14 @@ install_required_dependencies_for_apache2() {
 			a2enmod cgi
 			;;
 		"redhat")
-			dependencies="mod_dav_svn subversion git mod_perl perl-Digest-SHA perl-libwww-perl perl-JSON-PP"
+			dependencies="mod_dav_svn subversion git mod_perl perl-Digest-SHA perl-libwww-perl perl-JSON"
 			for dependency in $dependencies ; do
 				wiz_check_package "$dependency" || yum install -y "$dependency"
 			done
+			# centos7 and up
+			if ! wiz_check_package "perl-JSON-PP" ; then
+				( yum info "perl-JSON-PP" &>/dev/null && yum install -y "perl-JSON-PP" ) || true
+			fi
 
 			wiz_set "repositories/git-http-backend" "/usr/libexec/git-core/git-http-backend/"
 			;;
