@@ -9,6 +9,7 @@ VHOST_INCLUDES_DIR="/etc/${APP_NAME}/addons/apache2/includes/vhost"
 SERVER_INCLUDES_DIR="/etc/${APP_NAME}/addons/apache2/includes/server"
 OSFAMILY="$(wiz_fact osfamily)"
 SERVER_USER=$(${CLI} config:get SERVER_USER)
+SERVER_GROUP=$(${CLI} config:get SERVER_GROUP)
 
 ##
 # Create and set proper permissions to the given SVN repositories root
@@ -19,7 +20,7 @@ create_svn_repositories() {
 	fi
 
 	# Ensure permissions are set to what we need
-	chown ${APP_USER}.${SERVER_USER} "$svn_repositories"
+	chown ${APP_USER}.${SERVER_GROUP} "$svn_repositories"
 	chmod 2770 "$svn_repositories"
 
 	${CLI} config:set SVN_REPOSITORIES="$svn_repositories"
@@ -41,7 +42,7 @@ create_git_repositories() {
 	fi
 
 	# Ensure permissions are set to what we need
-	chown ${APP_USER}.${SERVER_USER} "$git_repositories"
+	chown ${APP_USER}.${SERVER_GROUP} "$git_repositories"
 	chmod 2770 "$git_repositories"
 
 	${CLI} config:set GIT_REPOSITORIES="$git_repositories"
@@ -183,12 +184,7 @@ setup_git_configuration() {
 # Let openproject be a member of the apache group
 # for easier group-based sharing of repository directories
 add_openproject_to_apache_group() {
-	if [ "$OSFAMILY" = "suse" ] ; then
-		# Use different usermod signature for suse
-		usermod -A "${SERVER_USER}" "${APP_USER}"
-	else
-		usermod -a -G "${SERVER_USER}" "${APP_USER}"
-	fi
+	usermod -a -G "${SERVER_GROUP}" "${APP_USER}"
 }
 
 
