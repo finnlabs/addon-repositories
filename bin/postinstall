@@ -140,6 +140,22 @@ setup_subversion_wrapper() {
 
 
 ##
+# Create a vhost for the repository wrapper to be accessed by localhost
+setup_subversion_vhost() {
+	local src="conf/server/20_repoman_svn_vhost.conf"
+	local dst="$SERVER_INCLUDES_DIR/20_repoman_svn_vhost.conf"
+	local repoman_location="$VHOST_INCLUDES_DIR/repoman_svn_wrapper.conf"
+
+	tmpfile=$(mktemp)
+	cp -f "$src" "$tmpfile"
+	sed -i "s|_REPOMAN_SVN_CONF_LOCATION_|${repoman_location}|g" ${tmpfile}
+	mv -f "$tmpfile" "$dst"
+
+	enable_apache2_vhost_include "$dst"
+}
+
+
+##
 # Replace the configuration templates in 'git_smart_http.conf'
 # and output the configured file as an Apache vhost configuration.
 setup_git_configuration() {
@@ -171,20 +187,6 @@ add_openproject_to_apache_group() {
 	usermod -a -G "${SERVER_GROUP}" "${APP_USER}"
 }
 
-##
-# Removes outdated includes from earlier versions
-remove_outdated_includes() {
-	local old_repositories_perl_conf="$SERVER_INCLUDES_DIR/repositories_perl.conf"
-	local old_repoman_include="$SERVER_INCLUDES_DIR/20_repoman_svn_vhost.conf"
-
-	if [ -e ${old_repositories_perl_conf} ] ; then
-		rm -f ${old_repositories_perl_conf}
-	fi
-
-	if [ -e ${old_repoman_include} ] ; then
-		rm -f ${old_repoman_include}
-	fi
-}
 
 ##
 # Configure the correct perl include path for loading
@@ -196,7 +198,10 @@ configure_apache2_server() {
 	local repositories_perl_conf="$SERVER_INCLUDES_DIR/00_repositories_perl.conf"
 
 	# Delete old configuration, if it exists
-	remove_outdated_includes
+	local old_repositories_perl_conf="$SERVER_INCLUDES_DIR/repositories_perl.conf"
+	if [ -e ${old_repositories_perl_conf} ] ; then
+		rm -f ${old_repositories_perl_conf}
+	fi
 
 	case "$OSFAMILY" in
 		"debian")
@@ -238,6 +243,7 @@ SERVER_CONF
 		# Install Apache wrapper
 		local apache_wrapper_token="$(wiz_get "repositories/apache-wrapper-token")"
 		setup_subversion_wrapper "$apache_wrapper_token"
+		setup_subversion_vhost
 
 		setup_svn_configuration "$sys_api_key"
 		create_svn_repositories
