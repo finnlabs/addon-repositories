@@ -184,7 +184,12 @@ setup_git_configuration() {
 # Let openproject be a member of the apache group
 # for easier group-based sharing of repository directories
 add_openproject_to_apache_group() {
-	usermod -a -G "${SERVER_GROUP}" "${APP_USER}"
+	if usermod --help | grep -- "-A group" &>/dev/null ; then
+		# sles11
+		usermod -A "${SERVER_GROUP}" "${APP_USER}"
+	else
+		usermod -a -G "${SERVER_GROUP}" "${APP_USER}"
+	fi
 }
 
 
