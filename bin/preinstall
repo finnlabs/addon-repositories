@@ -38,6 +38,8 @@ install_required_dependencies_for_apache2() {
 				wiz_check_package "$dependency" || zypper install -y "$dependency"
 			done
 
+			wiz_set "repositories/git-http-backend" "/usr/lib/git/git-http-backend"
+
 			a2enmod perl
 			a2enmod dav
 			a2enmod dav_svn
