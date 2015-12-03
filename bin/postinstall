@@ -264,6 +264,9 @@ SERVER_CONF
 }
 
 install_apache_configuration() {
+	${CLI} config:set SVN_REPOSITORIES=""
+	${CLI} config:set GIT_REPOSITORIES=""
+
 	if vendor_selected "svn" || vendor_selected "git"; then
 		configure_apache2_server
 		add_openproject_to_apache_group
