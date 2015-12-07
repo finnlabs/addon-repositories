@@ -10,7 +10,7 @@ SERVER_INCLUDES_DIR="/etc/${APP_NAME}/addons/apache2/includes/server"
 OSFAMILY="$(wiz_fact osfamily)"
 SERVER_USER=$(${CLI} config:get SERVER_USER)
 SERVER_GROUP=$(${CLI} config:get SERVER_GROUP)
-SUBFOLDER_LOCATION=$(${CLI} config:get SUBFOLDER_LOCATION || echo "")
+SERVER_PATH_PREFIX=$(${CLI} config:get SERVER_PATH_PREFIX || echo "")
 INTERNAL_PORT=$(${CLI} config:get PORT || echo "6000")
 INTERNAL_URL="http://127.0.0.1:${INTERNAL_PORT}${SUBFOLDER_LOCATION}"
 
@@ -115,7 +115,7 @@ setup_svn_configuration() {
 	sed -i "s|_SVN_REPOSITORIES_|${svn_repositories}|g" ${tmpfile}
 	sed -i "s|_APP_URI_|${INTERNAL_URL}|g" ${tmpfile}
 	sed -i "s|_APP_API_KEY_|${sys_api_key}|g" ${tmpfile}
-	sed -i "s|_APP_SUBFOLDER_|${SUBFOLDER_LOCATION}|g" ${tmpfile}
+	sed -i "s|_SERVER_PATH_PREFIX_|${SERVER_PATH_PREFIX}|g" ${tmpfile}
 	mv -f "$tmpfile" "$dst"
 
 	enable_apache2_vhost_include "$dst"
@@ -135,11 +135,11 @@ setup_subversion_wrapper() {
 	cp -f "$src" "$tmpfile"
 	sed -i "s|_REPOMAN_ACCESS_TOKEN_|${access_token}|g" ${tmpfile}
 	sed -i "s|_SVN_REPOSITORIES_|${svn_repositories}|g" ${tmpfile}
-	sed -i "s|_APP_SUBFOLDER_|${SUBFOLDER_LOCATION}|g" ${tmpfile}
+	sed -i "s|_SERVER_PATH_PREFIX_|${SERVER_PATH_PREFIX}|g" ${tmpfile}
 	mv -f "$tmpfile" "$dst"
 
 	${CLI} config:set SVN_REPOMAN_TOKEN="$access_token"
-	${CLI} config:set SVN_REPOMAN_URL="http://127.0.0.1${SUBFOLDER_LOCATION}/repoman_svn"
+	${CLI} config:set SVN_REPOMAN_URL="http://127.0.0.1${SERVER_PATH_PREFIX}repoman_svn"
 
 	enable_apache2_vhost_include "$dst"
 }
@@ -181,7 +181,7 @@ setup_git_configuration() {
 	sed -i "s|_GIT_HTTP_BACKEND_|${git_http_backend}|g" ${tmpfile}
 	sed -i "s|_APP_URI_|${INTERNAL_URL}|g" ${tmpfile}
 	sed -i "s|_APP_API_KEY_|${sys_api_key}|g" ${tmpfile}
-	sed -i "s|_APP_SUBFOLDER_|${SUBFOLDER_LOCATION}|g" ${tmpfile}
+	sed -i "s|_SERVER_PATH_PREFIX_|${SERVER_PATH_PREFIX}|g" ${tmpfile}
 	mv -f "$tmpfile" "$dst"
 
 	enable_apache2_vhost_include "$dst"
