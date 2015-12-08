@@ -12,7 +12,7 @@ SERVER_USER=$(${CLI} config:get SERVER_USER)
 SERVER_GROUP=$(${CLI} config:get SERVER_GROUP)
 SERVER_PATH_PREFIX=$(${CLI} config:get SERVER_PATH_PREFIX || echo "")
 INTERNAL_PORT=$(${CLI} config:get PORT || echo "6000")
-INTERNAL_URL="http://127.0.0.1:${INTERNAL_PORT}${SUBFOLDER_LOCATION}"
+INTERNAL_URL="http://127.0.0.1:${INTERNAL_PORT}${SERVER_PATH_PREFIX}"
 
 ##
 # Create and set proper permissions to the given SVN repositories root
