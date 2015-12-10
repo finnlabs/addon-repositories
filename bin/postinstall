@@ -173,7 +173,7 @@ setup_git_configuration() {
 
 	# Force trailing slash if missing to treat as CGI script
 	trailing=${git_http_backend:length-1:1}
-	[[ $last_char != "/" ]] && git_http_backend="${git_http_backend}/"; :
+	[[ $trailing != "/" ]] && git_http_backend="${git_http_backend}/"; :
 
 	tmpfile=$(mktemp)
 	cp -f "$src" "$tmpfile"
