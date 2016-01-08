@@ -10,6 +10,9 @@ SERVER_INCLUDES_DIR="/etc/${APP_NAME}/addons/apache2/includes/server"
 OSFAMILY="$(wiz_fact osfamily)"
 SERVER_USER=$(${CLI} config:get SERVER_USER)
 SERVER_GROUP=$(${CLI} config:get SERVER_GROUP)
+SERVER_PATH_PREFIX=$(${CLI} config:get SERVER_PATH_PREFIX || echo "")
+INTERNAL_PORT=$(${CLI} config:get PORT || echo "6000")
+INTERNAL_URL="http://127.0.0.1:${INTERNAL_PORT}${SERVER_PATH_PREFIX}"
 
 ##
 # Create and set proper permissions to the given SVN repositories root
@@ -110,8 +113,9 @@ setup_svn_configuration() {
 	tmpfile=$(mktemp)
 	cp -f "$src" "$tmpfile"
 	sed -i "s|_SVN_REPOSITORIES_|${svn_repositories}|g" ${tmpfile}
-	sed -i "s|_APP_URI_|http://127.0.0.1:${port}|g" ${tmpfile}
+	sed -i "s|_APP_URI_|${INTERNAL_URL}|g" ${tmpfile}
 	sed -i "s|_APP_API_KEY_|${sys_api_key}|g" ${tmpfile}
+	sed -i "s|_SERVER_PATH_PREFIX_|${SERVER_PATH_PREFIX}|g" ${tmpfile}
 	mv -f "$tmpfile" "$dst"
 
 	enable_apache2_vhost_include "$dst"
@@ -131,9 +135,11 @@ setup_subversion_wrapper() {
 	cp -f "$src" "$tmpfile"
 	sed -i "s|_REPOMAN_ACCESS_TOKEN_|${access_token}|g" ${tmpfile}
 	sed -i "s|_SVN_REPOSITORIES_|${svn_repositories}|g" ${tmpfile}
+	sed -i "s|_SERVER_PATH_PREFIX_|${SERVER_PATH_PREFIX}|g" ${tmpfile}
 	mv -f "$tmpfile" "$dst"
 
 	${CLI} config:set SVN_REPOMAN_TOKEN="$access_token"
+	${CLI} config:set SVN_REPOMAN_URL="http://127.0.0.1${SERVER_PATH_PREFIX}repoman_svn"
 
 	enable_apache2_vhost_include "$dst"
 }
@@ -167,14 +173,15 @@ setup_git_configuration() {
 
 	# Force trailing slash if missing to treat as CGI script
 	trailing=${git_http_backend:length-1:1}
-	[[ $last_char != "/" ]] && git_http_backend="${git_http_backend}/"; :
+	[[ $trailing != "/" ]] && git_http_backend="${git_http_backend}/"; :
 
 	tmpfile=$(mktemp)
 	cp -f "$src" "$tmpfile"
 	sed -i "s|_GIT_REPOSITORIES_|${git_repositories}|g" ${tmpfile}
 	sed -i "s|_GIT_HTTP_BACKEND_|${git_http_backend}|g" ${tmpfile}
-	sed -i "s|_APP_URI_|http://127.0.0.1:${port}|g" ${tmpfile}
+	sed -i "s|_APP_URI_|${INTERNAL_URL}|g" ${tmpfile}
 	sed -i "s|_APP_API_KEY_|${sys_api_key}|g" ${tmpfile}
+	sed -i "s|_SERVER_PATH_PREFIX_|${SERVER_PATH_PREFIX}|g" ${tmpfile}
 	mv -f "$tmpfile" "$dst"
 
 	enable_apache2_vhost_include "$dst"
@@ -192,13 +199,11 @@ add_openproject_to_apache_group() {
 	fi
 }
 
-
 ##
 # Configure the correct perl include path for loading
 # the OpenProjectAuthentication perl module.
 # Configure and write SVN and Git configuration files as Apache vhosts.
 configure_apache2_server() {
-	local port=$(${CLI} config:get PORT || echo "6000")
 	local sys_api_key="$(wiz_get "repositories/api-key")"
 	local repositories_perl_conf="$SERVER_INCLUDES_DIR/00_repositories_perl.conf"
 
