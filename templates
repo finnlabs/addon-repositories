@@ -26,7 +26,7 @@ Description: Enter the path to the directory that hosts the SVN repositories:
 Template: repositories/git-path
 Type: string
 Default: /var/db/_APP_NAME_/git
-Description: Enter the path to the directory that hosts the SVN repositories:
+Description: Enter the path to the directory that hosts the Git repositories:
 
 Template: repositories/git-http-backend
 Type: string
