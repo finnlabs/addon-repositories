@@ -23,7 +23,7 @@ create_svn_repositories() {
 	fi
 
 	# Ensure permissions are set to what we need
-	chown ${APP_USER}.${SERVER_GROUP} "$svn_repositories"
+	chown ${SERVER_USER}.${SERVER_GROUP} "$svn_repositories"
 	chmod 2770 "$svn_repositories"
 
 	${CLI} config:set SVN_REPOSITORIES="$svn_repositories"
