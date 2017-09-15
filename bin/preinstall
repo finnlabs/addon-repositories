@@ -10,10 +10,17 @@ install_required_dependencies_for_apache2() {
 	local dependencies=""
 	case "$OSFAMILY" in
 		"debian")
-			dependencies="subversion git libapache2-mod-perl2 libapache2-svn libjson-perl"
+			dependencies="subversion git libapache2-mod-perl2 libjson-perl"
 			for dependency in $dependencies ; do
 				wiz_check_package "$dependency" || apt-get install -y "$dependency"
 			done
+
+			if wiz_check_package "libapache2-svn" ; then
+				apt-get install -y libapache2-svn
+			else
+				# debian 9
+				apt-get install -y libapache2-mod-svn
+			fi
 
 			a2enmod perl
 			a2enmod dav
