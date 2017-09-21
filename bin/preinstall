@@ -15,11 +15,11 @@ install_required_dependencies_for_apache2() {
 				wiz_check_package "$dependency" || apt-get install -y "$dependency"
 			done
 
-			if wiz_check_package "libapache2-svn" ; then
-				apt-get install -y libapache2-svn
+			if apt-cache show "libapache2-svn" &>/dev/null ; then
+				wiz_check_package "libapache2-svn" || apt-get install -y libapache2-svn
 			else
 				# debian 9
-				apt-get install -y libapache2-mod-svn
+				wiz_check_package "libapache2-mod-svn" || apt-get install -y libapache2-mod-svn
 			fi
 
 			a2enmod perl
