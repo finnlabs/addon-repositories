@@ -5,6 +5,12 @@ set -e
 . "${INSTALLER_DIR}/wizard"
 
 input_start() {
+	if [ "$(wiz_fact "osfamily")" = "redhat" ] && [ "$(wiz_fact "osversion")" = "8" ]; then
+		echo "Managed repositories are not supported for this distribution"
+		STATE="done"
+		return
+	fi
+
 	if [ "$(wiz_get "server/autoinstall")" = "skip" ] ; then
 		echo "No server installed. Skipping."
 		STATE="done"
