@@ -5,6 +5,7 @@ set -e
 . ${INSTALLER_DIR}/wizard
 
 OSFAMILY="$(wiz_fact osfamily)"
+OSVERSION="$(wiz_fact osversion)"
 
 install_required_dependencies_for_apache2() {
 	local dependencies=""
@@ -28,7 +29,12 @@ install_required_dependencies_for_apache2() {
 			a2enmod cgi
 			;;
 		"redhat")
-			dependencies="mod_dav_svn subversion git mod_perl perl-Digest-SHA perl-libwww-perl perl-JSON perl-Apache-Reload"
+			dependencies="mod_dav_svn subversion git mod_perl perl-Digest-SHA perl-libwww-perl perl-JSON"
+			case "$OSVERSION" in
+				8*)
+					dependencies="$dependencies perl-Apache-Reload"
+					;;
+			esac
 			for dependency in $dependencies ; do
 				wiz_check_package "$dependency" || yum install -y "$dependency"
 			done
